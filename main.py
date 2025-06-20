@@ -9,8 +9,9 @@ import shutil
 import time
 import zipfile
 import io
+from INTERFACEPLUGS.blackout.blackout import BlackoutESP32
 
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -125,6 +126,21 @@ def run_command(cmdline):
     if not parts:
         return
     cmd = parts[0].lower()
+    # List of supported basic terminal commands
+    BASIC_TERMINAL_COMMANDS = [
+        'ls', 'pwd', 'cat', 'echo', 'mkdir', 'rm', 'touch', 'cp', 'mv', 'whoami', 'date', 'head', 'tail', 'grep', 'find', 'chmod', 'chown', 'rmdir', 'tree', 'df', 'du', 'which', 'uname', 'ps', 'kill', 'top', 'clear'
+    ]
+    # If the command is a basic terminal command, execute it directly
+    if cmd in BASIC_TERMINAL_COMMANDS:
+        try:
+            result = subprocess.run(parts, capture_output=True, text=True)
+            if result.stdout:
+                print(result.stdout, end='')
+            if result.stderr:
+                print(f"{RED}{result.stderr}{RESET}", end='')
+        except Exception as e:
+            print(f"{RED}{BOLD}[!] Failed to execute command: {e}{RESET}")
+        return
     # Map short form to full command if needed
     if cmd in SHORT_TO_FULL:
         cmd = SHORT_TO_FULL[cmd]
@@ -277,6 +293,23 @@ def run_command(cmdline):
         print(f"{BOLD}{PINK}[*] Daemon command invoked! (stub){RESET}")
         print()
     elif cmd == "interfaceplug":
+        if len(parts) > 1 and parts[1] in ["-blackout", "-b"]:
+            blackout = BlackoutESP32(lambda msg, t='system': print(f"{YELLOW if t=='error' else GREEN if t=='success' else PINK}{msg}{RESET}"))
+            args = parts[2:]
+            if not args:
+                print(f"{RED}Usage: interfaceplug -blackout -connect <server_ip> | -scan | -connect -p <device> | -send <command>{RESET}")
+                return
+            if args[0] in ["-connect", "-c"] and len(args) == 2:
+                blackout.connect_to_server(args[1])
+            elif args[0] == "-scan":
+                blackout.scan_serial_ports()
+            elif args[0] in ["-connect", "-c"] and len(args) > 2 and args[1] in ["-p", "-pw"]:
+                blackout.connect_to_esp32(args[2])
+            elif args[0] == "-send" and len(args) > 1:
+                blackout.send_esp32_command(' '.join(args[1:]))
+            else:
+                print(f"{RED}Usage: interfaceplug -blackout -connect <server_ip> | -scan | -connect -p <device> | -send <command>{RESET}")
+            return
         with loading_state(message="Plugging interface...", duration=2, print_ascii_art=print_ascii_art):
             pass
         print(f"{BOLD}{PINK}[*] Interfaceplug command invoked! (stub){RESET}")
