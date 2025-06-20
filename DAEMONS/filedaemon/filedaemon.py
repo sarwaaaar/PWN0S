@@ -50,52 +50,52 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         arg = sys.argv[1]
         if arg in ("-start", "-s"):
-        # Serve the 'dir' directory
-        try:
-            if not os.path.isdir(serve_dir):
-                print_error(f"Directory not found: {serve_dir}")
-                sys.exit(1)
-            os.chdir(serve_dir)
-            port = 8000
-            print_info(f"Serving {serve_dir} at http://localhost:{port}/ (Ctrl+C to stop)")
-            httpd = HTTPServer(("0.0.0.0", port), SimpleHTTPRequestHandler)
+            # Serve the 'dir' directory
             try:
-                httpd.serve_forever()
-            except KeyboardInterrupt:
-                print_info("Server stopped by user.")
-        except Exception as e:
-            print_error(f"Failed to start server: {e}")
-            sys.exit(1)
-        elif arg in ("-clean", "-c"):
-        # Remove all files and folders in 'dir'
-        try:
-            if not os.path.isdir(serve_dir):
-                print_error(f"Directory not found: {serve_dir}")
-                sys.exit(1)
-            removed_any = False
-            for entry in os.listdir(serve_dir):
-                entry_path = os.path.join(serve_dir, entry)
+                if not os.path.isdir(serve_dir):
+                    print_error(f"Directory not found: {serve_dir}")
+                    sys.exit(1)
+                os.chdir(serve_dir)
+                port = 8000
+                print_info(f"Serving {serve_dir} at http://localhost:{port}/ (Ctrl+C to stop)")
+                httpd = HTTPServer(("0.0.0.0", port), SimpleHTTPRequestHandler)
                 try:
-                    if os.path.isfile(entry_path) or os.path.islink(entry_path):
-                        os.remove(entry_path)
-                        removed_any = True
-                    elif os.path.isdir(entry_path):
-                        shutil.rmtree(entry_path)
-                        removed_any = True
-                except Exception as e:
-                    print_warning(f"Failed to remove {entry_path}: {e}")
-            if removed_any:
-                print_info(f"All contents removed from {serve_dir}.")
-            else:
-                print_info(f"{serve_dir} is already empty.")
-        except Exception as e:
-            print_error(f"Failed to clean directory: {e}")
-            sys.exit(1)
+                    httpd.serve_forever()
+                except KeyboardInterrupt:
+                    print_info("Server stopped by user.")
+            except Exception as e:
+                print_error(f"Failed to start server: {e}")
+                sys.exit(1)
+        elif arg in ("-clean", "-c"):
+            # Remove all files and folders in 'dir'
+            try:
+                if not os.path.isdir(serve_dir):
+                    print_error(f"Directory not found: {serve_dir}")
+                    sys.exit(1)
+                removed_any = False
+                for entry in os.listdir(serve_dir):
+                    entry_path = os.path.join(serve_dir, entry)
+                    try:
+                        if os.path.isfile(entry_path) or os.path.islink(entry_path):
+                            os.remove(entry_path)
+                            removed_any = True
+                        elif os.path.isdir(entry_path):
+                            shutil.rmtree(entry_path)
+                            removed_any = True
+                    except Exception as e:
+                        print_warning(f"Failed to remove {entry_path}: {e}")
+                if removed_any:
+                    print_info(f"All contents removed from {serve_dir}.")
+                else:
+                    print_info(f"{serve_dir} is already empty.")
+            except Exception as e:
+                print_error(f"Failed to clean directory: {e}")
+                sys.exit(1)
         else:
             print(f"{RED}{BOLD}✗ Error:{RESET} {YELLOW}Unknown option '{arg}' for filedaemon.{RESET}\n")
             suggest_filedaemon_option(arg, FILEDAEMON_OPTS)
             print()
             print_filedaemon_guide()
     else:
-        print(USAGE) 
+        print(USAGE)
         print_filedaemon_guide() 

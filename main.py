@@ -11,7 +11,7 @@ import zipfile
 import io
 from INTERFACEPLUGS.blackout.blackout import BlackoutESP32
 
-VERSION = "0.0.6"
+VERSION = "0.0.7"
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -75,6 +75,13 @@ def print_command_guide():
     print(f"{BOLD}{PINK}Main Commands:{RESET}")
     for c in COMMAND_ALIASES:
         print(f"  {PINK}{c:<14}{RESET} {YELLOW}(short: {COMMAND_ALIASES[c]}){RESET}")
+    print(f"\n{BOLD}{PINK}Subcommands:{RESET}")
+    print(f"  {PINK}quickhack{RESET} [ {YELLOW}shortcirc (sc), ping (pg){RESET} ]")
+    print(f"    {YELLOW}shortcirc methods:{RESET} SMS (s), EMAIL (e), NTP (n), UDP (u), SYN (sy), ICMP (i), POD (p), MEMCACHED (m), HTTP (h), SLOWLORIS (sl)")
+    print(f"    {YELLOW}ping options:{RESET} IP Tracker (ip), Show Your IP (sip), Phone Number Tracker (pn), Username Tracker (ut), Exit (q), {PINK}seeker{RESET}")
+    print(f"    {YELLOW}seeker:{RESET} Run with: {PINK}python QUICKHACKS/ping/seeker.py -t <template_num> [options]{RESET}")
+    print(f"{YELLOW}Note:{RESET} Commands other than quickhack, daemon, and interfaceplug must start with a dash (-).\n")
+
 def suggest_command(user_cmd, valid_cmds):
     matches = difflib.get_close_matches(user_cmd, valid_cmds, n=3, cutoff=0.5)
     if matches:
@@ -105,6 +112,18 @@ def print_ping_guide():
     print(f"  -ut      (Username Tracker)")
     print(f"  -h       (Help)")
     print(f"  -q       (Exit)")
+
+def print_seeker_guide():
+    print(f"{BOLD}{PINK}seeker Command Options:{RESET}")
+    print(f"  -k,  --kml <filename>         KML filename")
+    print(f"  -p,  --port <port>            Web server port [Default: 8080]")
+    print(f"  -u,  --update                 Check for updates")
+    print(f"  -v,  --version                Prints version")
+    print(f"  -t,  --template <num>         Load template and loads parameters from env variables (required)")
+    print(f"  -d,  --debugHTTP <bool>       Disable HTTPS redirection for testing only")
+    print(f"  -tg, --telegram <token:chatId> Telegram bot API token [Format: token:chatId]")
+    print(f"  -wh, --webhook <url>          Webhook URL [POST method & unauthenticated]")
+    print()
 
 def suggest_subcommand_option(user_opt, valid_opts):
     matches = difflib.get_close_matches(user_opt, valid_opts, n=3, cutoff=0.5)
@@ -179,9 +198,35 @@ def run_command(cmdline):
                         suggest_subcommand_option(arg, valid_opts)
                         print()
                         print_shortcirc_guide()
+                        print_command_guide()
                         return
             if tool == "ping":
-                valid_opts = ['-ip', '-pn', '-ut', '-sip', '-h', '-q']
+                valid_opts = ['-ip', '-pn', '-ut', '-sip', '-h', '-q', '-seeker']
+                is_seeker = '-seeker' in parts[2:]
+                if is_seeker:
+                    # Find the index of -seeker and pass all following args to seeker.py
+                    seeker_index = parts.index('-seeker')
+                    seeker_args = parts[seeker_index+1:]
+                    with loading_state(message="Installing requirements for seeker...", duration=2, print_ascii_art=print_ascii_art):
+                        pass
+                    requirements = ["requests", "argparse", "packaging", "psutil"]
+                    print(f"{YELLOW}{BOLD}[*] Installing requirements...{RESET}")
+                    try:
+                        subprocess.run([sys.executable, "-m", "pip", "install", "--break-system-packages"] + requirements, check=True)
+                    except subprocess.CalledProcessError:
+                        print(f"{RED}{BOLD}[!] Failed to install requirements. Aborting.{RESET}")
+                        print()
+                        return
+                    with loading_state(message="Invoking seeker toolkit...", duration=2, print_ascii_art=print_ascii_art):
+                        pass
+                    script_path = os.path.join(PROJECT_ROOT, "QUICKHACKS", "ping", "seeker.py")
+                    try:
+                        subprocess.run([sys.executable, script_path] + seeker_args)
+                    except FileNotFoundError:
+                        print(f"{RED}{BOLD}[!] seeker script not found at {script_path}.{RESET}")
+                    print()
+                    return
+                # Normal ping option validation if not seeker
                 for arg in parts[2:]:
                     if arg.startswith('-') and arg not in valid_opts and not arg.startswith('--'):
                         print(f"{RED}{BOLD}✗ Error:{RESET} {YELLOW}Unknown option '{arg}' for ping.{RESET}\n")
@@ -189,6 +234,10 @@ def run_command(cmdline):
                         print()
                         print_ping_guide()
                         return
+                # If help requested for seeker
+                if is_seeker and ('-h' in parts[2:] or '--help' in parts[2:]):
+                    print_seeker_guide()
+                    return
             # Replace with full name for script invocation
             if tool == "shortcirc":
                 with loading_state(message="Installing requirements for shortcirc...", duration=2, print_ascii_art=print_ascii_art):
@@ -286,36 +335,40 @@ def run_command(cmdline):
             pass
         print(f"{BOLD}{PINK}[*] Daemon command invoked! (stub){RESET}")
         print()
-    elif cmd == "interfaceplug":
-        if len(parts) > 1 and parts[1] in ["-blackout", "-b"]:
-            blackout = BlackoutESP32(
-                output_callback=lambda msg, t='system': print(msg),
-                print_ascii_art=print_ascii_art,
-                YELLOW=YELLOW,
-                GREEN=GREEN,
-                RED=RED,
-                PINK=PINK,
-                RESET=RESET
-            )
-            args = parts[2:]
-            if not args:
-                print(f"{RED}Usage: interfaceplug -blackout -connect <server_ip> | -scan | -connect -p <device> | -send <command>{RESET}")
-                return
-            if args[0] in ["-connect", "-c"] and len(args) == 2:
-                blackout.connect_to_server(args[1])
-            elif args[0] == "-scan":
-                blackout.scan_serial_ports()
-            elif args[0] in ["-connect", "-c"] and len(args) > 2 and args[1] in ["-p", "-pw"]:
-                blackout.connect_to_esp32(args[2])
-            elif args[0] == "-send" and len(args) > 1:
-                blackout.send_esp32_command(' '.join(args[1:]))
-            else:
-                print(f"{RED}Usage: interfaceplug -blackout -connect <server_ip> | -scan | -connect -p <device> | -send <command>{RESET}")
+    elif cmd == "interfaceplug" and len(parts) > 1 and parts[1] in ["-blackout", "-b"]:
+        blackout = BlackoutESP32(
+            output_callback=lambda msg, t='system': print(msg),
+            print_ascii_art=print_ascii_art,
+            YELLOW=YELLOW,
+            GREEN=GREEN,
+            RED=RED,
+            PINK=PINK,
+            RESET=RESET
+        )
+        args = parts[2:]
+        valid_blackout_opts = ["-connect", "-c", "-scan", "-send", "-p", "-pw"]
+        if not args or (args[0] not in valid_blackout_opts and not (args[0] in ["-connect", "-c"] and len(args) > 1 and args[1] in ["-p", "-pw"])):
+            print(f"{RED}{BOLD}✗ Error:{RESET} {YELLOW}Unknown blackout subcommand or option: '{' '.join(args)}'{RESET}\n")
+            suggest_subcommand_option(args[0] if args else '', valid_blackout_opts)
+            print()
+            print(f"{BOLD}{PINK}interfaceplug -blackout options:{RESET}\n  -connect <server_ip>\n  -scan\n  -connect -p <device>\n  -send <command>\n")
+            print_command_guide()
             return
-        with loading_state(message="Plugging interface...", duration=2, print_ascii_art=print_ascii_art):
-            pass
-        print(f"{BOLD}{PINK}[*] Interfaceplug command invoked! (stub){RESET}")
-        print()
+        if args[0] in ["-connect", "-c"] and len(args) == 2:
+            with loading_state(message=f"Connecting to server at {args[1]}...", duration=2, print_ascii_art=print_ascii_art):
+                blackout.connect_to_server(args[1])
+        elif args[0] == "-scan":
+            with loading_state(message="Scanning serial ports...", duration=2, print_ascii_art=print_ascii_art):
+                blackout.scan_serial_ports()
+        elif args[0] in ["-connect", "-c"] and len(args) > 2 and args[1] in ["-p", "-pw"]:
+            with loading_state(message=f"Connecting to ESP32 on {args[2]}...", duration=2, print_ascii_art=print_ascii_art):
+                blackout.connect_to_esp32(args[2])
+        elif args[0] == "-send" and len(args) > 1:
+            with loading_state(message=f"Sending command: {' '.join(args[1:])}...", duration=2, print_ascii_art=print_ascii_art):
+                blackout.send_esp32_command(' '.join(args[1:]))
+        else:
+            print(f"{RED}Usage: interfaceplug -blackout -connect <server_ip> | -scan | -connect -p <device> | -send <command>{RESET}")
+        return
     elif cmd == "clear":
         clear_screen()
         print_ascii_art()
