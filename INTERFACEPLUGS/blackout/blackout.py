@@ -5,7 +5,7 @@ import time
 from datetime import datetime
 
 class BlackoutESP32:
-    def __init__(self, output_callback=None, print_ascii_art=None, YELLOW="\033[93m", GREEN="\033[38;2;102;204;102m", RED="\033[38;2;204;103;102m", PINK="\033[38;2;227;148;220m", RESET="\033[0m"):
+    def __init__(self, output_callback=None, print_ascii_art=None, YELLOW="\033[93m", GREEN="\033[38;2;180;189;104m", RED="\033[38;2;204;103;102m", PINK="\033[38;2;227;148;220m", RESET="\033[0m"):
         self.server_url = None
         self.esp32_connected = False
         self.output_callback = output_callback or (lambda msg, type='system': print(msg))

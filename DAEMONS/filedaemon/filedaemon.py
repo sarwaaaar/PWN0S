@@ -5,7 +5,7 @@ import shutil
 import difflib
 
 RED = "\033[38;2;204;103;102m"
-GREEN = "\033[38;2;102;204;103m"
+GREEN = "\033[38;2;180;189;104m"
 YELLOW = "\033[93m"
 BOLD = "\033[1m"
 RESET = "\033[0m"

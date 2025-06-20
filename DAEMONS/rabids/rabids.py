@@ -61,7 +61,7 @@ def build_rust_project(project_dir, platform_name):
                 package_name = line.split("=")[1].strip().strip('"')
                 break
     if not package_name:
-        package_name = "badbunny"
+        package_name = "spidermurphy"
     ext = ".exe" if platform_name == "windows" else ""
     exe_path = os.path.join(project_dir, "target", target_triple, "release", f"{package_name}{ext}")
     return exe_path
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     platform_name = args.platform
     
     base_dir = SCRIPT_ROOT
-    project_dir = os.path.join(base_dir, "source", "badbunny")
+    project_dir = os.path.join(base_dir, "source", "spidermurphy")
     rust_file = os.path.join(project_dir, "src", "main.rs")
     output_dir = os.path.join(base_dir, "..", "filedaemon", "dir")
     output_dir = os.path.abspath(output_dir)
